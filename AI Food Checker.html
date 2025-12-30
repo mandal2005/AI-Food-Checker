@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Healthy Food Checker - Indian Cuisine</title>
+    <title>Healthy Food Checker</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -82,6 +82,7 @@
         
         .input-group {
             margin-bottom: 20px;
+            position: relative;
         }
         
         label {
@@ -103,38 +104,6 @@
         input:focus, select:focus {
             border-color: #2d9c8a;
             outline: none;
-        }
-        
-        .file-input-container {
-            border: 2px dashed #c1e5e0;
-            border-radius: 8px;
-            padding: 25px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .file-input-container:hover {
-            border-color: #2d9c8a;
-            background-color: #f8fdfc;
-        }
-        
-        .file-input-container i {
-            font-size: 2.5rem;
-            color: #2d9c8a;
-            margin-bottom: 10px;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .preview-image {
-            max-width: 100%;
-            max-height: 200px;
-            border-radius: 8px;
-            margin-top: 15px;
-            display: none;
         }
         
         button {
@@ -370,6 +339,68 @@
             transform: translateY(-2px);
         }
         
+        /* Search Results Styling */
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .search-result-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #e0f0ec;
+            transition: background-color 0.2s;
+        }
+        
+        .search-result-item:hover {
+            background-color: #f0f7f4;
+        }
+        
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .search-result-name {
+            font-weight: 600;
+            color: #1f6d5e;
+        }
+        
+        .search-result-category {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 3px;
+        }
+        
+        .search-result-healthy {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            color: white;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        
+        .search-result-healthy.healthy {
+            background-color: #2d9c8a;
+        }
+        
+        .search-result-healthy.moderate {
+            background-color: #f0ad4e;
+        }
+        
+        .search-result-healthy.unhealthy {
+            background-color: #d9534f;
+        }
+        
         footer {
             text-align: center;
             padding: 20px;
@@ -407,6 +438,10 @@
                 flex: 1 0 calc(50% - 8px);
                 max-width: calc(50% - 8px);
             }
+            
+            .search-results {
+                max-height: 250px;
+            }
         }
     </style>
 </head>
@@ -422,23 +457,13 @@
                 <h2 class="section-title">Check Food Healthiness</h2>
                 
                 <div class="input-group">
-                    <label for="foodName"><i class="fas fa-utensils"></i> Food Name</label>
+                    <label for="foodName"><i class="fas fa-utensils"></i> Search Indian Dish</label>
                     <input type="text" id="foodName" placeholder="e.g., Samosa, Paneer Butter Masala, Gulab Jamun">
+                    <div class="search-results" id="searchResults"></div>
                 </div>
                 
                 <div class="input-group">
-                    <label>Or Upload Food Image</label>
-                    <div class="file-input-container" id="fileInputContainer">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <p>Click to upload a food image</p>
-                        <p><small>Supported formats: JPG, PNG, GIF</small></p>
-                        <input type="file" id="foodImage" accept="image/*" class="hidden">
-                    </div>
-                    <img id="imagePreview" class="preview-image" alt="Preview">
-                </div>
-                
-                <div class="input-group">
-                    <label for="foodSelect"><i class="fas fa-list"></i> Select Indian Dish</label>
+                    <label for="foodSelect"><i class="fas fa-list"></i> Or Select from List</label>
                     <select id="foodSelect">
                         <option value="">Select a dish...</option>
                         <option value="samosa">Samosa</option>
@@ -470,6 +495,14 @@
                 <button id="checkButton">
                     <i class="fas fa-search"></i> Check Healthiness & Ingredients
                 </button>
+                
+                <div style="margin-top: 25px; padding: 15px; background-color: #f8fdfc; border-radius: 8px;">
+                    <h3 style="color: #1f6d5e; margin-bottom: 10px;"><i class="fas fa-info-circle"></i> How to Use</h3>
+                    <p style="font-size: 0.95rem;">1. Type the name of an Indian dish in the search box</p>
+                    <p style="font-size: 0.95rem;">2. Or select a dish from the dropdown menu</p>
+                    <p style="font-size: 0.95rem;">3. Click "Check Healthiness & Ingredients" to analyze</p>
+                    <p style="font-size: 0.95rem;">4. Browse the database below and click on any dish</p>
+                </div>
             </div>
             
             <div class="result-section">
@@ -518,15 +551,16 @@
     </div>
 
     <script>
-        // Indian food database with health status and ingredients
+        // Enhanced Indian food database with health status and ingredients
         const foodDatabase = {
             "samosa": {
                 name: "Samosa",
                 healthy: "unhealthy",
-                ingredients: ["All-purpose flour", "Potatoes", "Peas", "Spices (cumin, coriander, garam masala)", "Oil for frying", "Salt"],
+                ingredients: ["All-purpose flour", "Potatoes", "Peas", "Spices (cumin, corinder, garam masala)", "Oil for frying", "Salt"],
                 image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
                 tips: "Samosas are deep-fried and high in calories. Try baking instead of frying, or enjoy in moderation as an occasional treat.",
-                nutrition: { calories: 262, carbs: "31g", fat: "14g", protein: "4g" }
+                nutrition: { calories: 262, carbs: "31g", fat: "14g", protein: "4g" },
+                aliases: ["samosas", "samosa", "veg samosa", "aloo samosa"]
             },
             "paneer_butter_masala": {
                 name: "Paneer Butter Masala",
@@ -534,7 +568,8 @@
                 ingredients: ["Paneer (cottage cheese)", "Butter", "Cream", "Tomatoes", "Cashews", "Onions", "Ginger-garlic paste", "Spices"],
                 image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
                 tips: "Rich in protein but high in fat and calories. Use less butter/cream and pair with whole grain roti for a balanced meal.",
-                nutrition: { calories: 320, carbs: "12g", fat: "24g", protein: "18g" }
+                nutrition: { calories: 320, carbs: "12g", fat: "24g", protein: "18g" },
+                aliases: ["paneer butter masala", "butter paneer", "paneer makhani", "butter chicken style paneer"]
             },
             "pani_puri": {
                 name: "Pani Puri",
@@ -542,7 +577,8 @@
                 ingredients: ["Puris (fried hollow dough)", "Boiled potatoes", "Chickpeas", "Tamarind chutney", "Mint-coriander water", "Spices", "Onions"],
                 image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Pani_Puri1.JPG/1200px-Pani_Puri1.JPG",
                 tips: "The puris are fried, but the filling can be healthy. Control portions and use less sweet chutney to reduce sugar intake.",
-                nutrition: { calories: 150, carbs: "25g", fat: "5g", protein: "3g" }
+                nutrition: { calories: 150, carbs: "25g", fat: "5g", protein: "3g" },
+                aliases: ["pani puri", "golgappa", "gol gappa", "puchka", "phuchka"]
             },
             "naan": {
                 name: "Naan",
@@ -550,7 +586,8 @@
                 ingredients: ["All-purpose flour", "Yogurt", "Yeast", "Butter/ghee", "Salt", "Sugar"],
                 image: "https://www.vegrecipesofindia.com/wp-content/uploads/2022/12/garlic-naan-3.jpg",
                 tips: "Made with refined flour. Opt for whole wheat naan or roti for more fiber. Control portion size as it's calorie-dense.",
-                nutrition: { calories: 320, carbs: "56g", fat: "6g", protein: "10g" }
+                nutrition: { calories: 320, carbs: "56g", fat: "6g", protein: "10g" },
+                aliases: ["naan", "garlic naan", "butter naan", "plain naan"]
             },
             "aloo_roti": {
                 name: "Aloo Roti",
@@ -558,7 +595,8 @@
                 ingredients: ["Whole wheat flour", "Potatoes", "Spices (cumin, coriander, chili)", "Oil/ghee", "Salt", "Fresh coriander"],
                 image: "https://i.pinimg.com/736x/79/85/0d/79850dd005f6c6b87b7809de4583d87e.jpg",
                 tips: "Healthier than plain naan due to whole wheat flour. Use minimal oil for cooking and pair with vegetable curry.",
-                nutrition: { calories: 180, carbs: "30g", fat: "5g", protein: "6g" }
+                nutrition: { calories: 180, carbs: "30g", fat: "5g", protein: "6g" },
+                aliases: ["aloo roti", "potato roti", "aloo paratha", "potato stuffed roti"]
             },
             "saag_paneer": {
                 name: "Saag Paneer",
@@ -566,7 +604,8 @@
                 ingredients: ["Spinach/mustard greens", "Paneer", "Onions", "Tomatoes", "Ginger-garlic paste", "Spices", "Oil"],
                 image: "https://images.immediate.co.uk/production/volatile/sites/30/2020/08/saag-paneer-4893170.jpg",
                 tips: "Excellent source of iron, calcium, and protein. Use less oil and cream. Enjoy with whole grain roti for complete nutrition.",
-                nutrition: { calories: 210, carbs: "12g", fat: "14g", protein: "16g" }
+                nutrition: { calories: 210, carbs: "12g", fat: "14g", protein: "16g" },
+                aliases: ["saag paneer", "palak paneer", "spinach paneer", "green paneer curry"]
             },
             "matar_kachori": {
                 name: "Matar Kachori",
@@ -574,7 +613,8 @@
                 ingredients: ["All-purpose flour", "Peas", "Spices (cumin, fennel, coriander)", "Oil for deep frying", "Salt"],
                 image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSiD8ch-IdH-cZft0CUeae6vbJzBlmC7ZRldw&s",
                 tips: "Deep-fried and high in calories. Enjoy occasionally in small portions. Consider baked alternatives if available.",
-                nutrition: { calories: 280, carbs: "35g", fat: "15g", protein: "6g" }
+                nutrition: { calories: 280, carbs: "35g", fat: "15g", protein: "6g" },
+                aliases: ["matar kachori", "pea kachori", "kachori", "pyaz kachori"]
             },
             "tandoori_chicken": {
                 name: "Tandoori Chicken",
@@ -582,7 +622,8 @@
                 ingredients: ["Chicken", "Yogurt", "Lemon juice", "Ginger-garlic paste", "Spices (paprika, cumin, garam masala)", "Oil"],
                 image: "https://spicecravings.com/wp-content/uploads/2024/09/Air-Fryer-Tandoori-Legs-Featured-2.jpg",
                 tips: "High-protein, low-fat when skin is removed. Tandoor cooking reduces oil usage. Excellent lean protein choice.",
-                nutrition: { calories: 240, carbs: "3g", fat: "9g", protein: "35g" }
+                nutrition: { calories: 240, carbs: "3g", fat: "9g", protein: "35g" },
+                aliases: ["tandoori chicken", "chicken tandoori", "tandoor grilled chicken", "tandoori"]
             },
             "gajar_ka_halwa": {
                 name: "Gajar Ka Halwa",
@@ -590,7 +631,8 @@
                 ingredients: ["Carrots", "Milk", "Sugar", "Ghee", "Nuts (almonds, cashews)", "Cardamom"],
                 image: "https://indianvegrecipe.com/wp-content/uploads/2020/01/carrot-halwa-recipe.jpg",
                 tips: "High in sugar and ghee. Enjoy small portions occasionally. Can reduce sugar and use less ghee for a healthier version.",
-                nutrition: { calories: 350, carbs: "45g", fat: "18g", protein: "8g" }
+                nutrition: { calories: 350, carbs: "45g", fat: "18g", protein: "8g" },
+                aliases: ["gajar ka halwa", "carrot halwa", "gajar halwa", "carrot pudding"]
             },
             "masala_lassi": {
                 name: "Masala Lassi",
@@ -598,7 +640,8 @@
                 ingredients: ["Yogurt", "Water", "Spices (cumin, mint)", "Salt", "Ice"],
                 image: "https://www.flavourstreat.com/wp-content/uploads/2018/06/masala-lassi.jpg",
                 tips: "Good source of probiotics and protein. Use low-fat yogurt and avoid adding sugar. Great digestive aid.",
-                nutrition: { calories: 120, carbs: "12g", fat: "4g", protein: "8g" }
+                nutrition: { calories: 120, carbs: "12g", fat: "4g", protein: "8g" },
+                aliases: ["masala lassi", "spiced lassi", "salted lassi", "namkeen lassi"]
             },
             "basmati_rice": {
                 name: "Simple Basmati Rice",
@@ -606,7 +649,8 @@
                 ingredients: ["Basmati rice", "Water", "Salt", "Optional: ghee, cumin seeds"],
                 image: "https://images.unsplash.com/photo-1516684732162-798a0062be99?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
                 tips: "Basmati rice has a lower glycemic index than other white rice. Control portion size and pair with protein and vegetables.",
-                nutrition: { calories: 200, carbs: "45g", fat: "0.5g", protein: "4g" }
+                nutrition: { calories: 200, carbs: "45g", fat: "0.5g", protein: "4g" },
+                aliases: ["basmati rice", "plain rice", "steamed rice", "jeera rice"]
             },
             "chicken_tikka_masala": {
                 name: "Chicken Tikka Masala",
@@ -614,7 +658,8 @@
                 ingredients: ["Chicken", "Yogurt", "Cream", "Tomatoes", "Butter", "Spices", "Onions", "Ginger-garlic paste"],
                 image: "https://bellyfull.net/wp-content/uploads/2021/05/Chicken-Tikka-Masala-blog.jpg",
                 tips: "High in protein but also high in fat due to cream and butter. Choose tomato-based version with less cream.",
-                nutrition: { calories: 310, carbs: "10g", fat: "20g", protein: "25g" }
+                nutrition: { calories: 310, carbs: "10g", fat: "20g", protein: "25g" },
+                aliases: ["chicken tikka masala", "tikka masala", "chicken tikka", "butter chicken"]
             },
             "lassi": {
                 name: "Lassi",
@@ -622,7 +667,8 @@
                 ingredients: ["Yogurt", "Water", "Sugar/honey", "Optional: rose water, cardamom"],
                 image: "https://www.sharmispassions.com/wp-content/uploads/2023/08/sweet-lassi3.jpg",
                 tips: "Sweet lassi is high in sugar. Opt for plain or salted lassi with less sugar. Good source of calcium and probiotics.",
-                nutrition: { calories: 160, carbs: "24g", fat: "4g", protein: "8g" }
+                nutrition: { calories: 160, carbs: "24g", fat: "4g", protein: "8g" },
+                aliases: ["lassi", "sweet lassi", "mango lassi", "yogurt drink"]
             },
             "gulab_jamun": {
                 name: "Gulab Jamun",
@@ -630,7 +676,8 @@
                 ingredients: ["Milk powder/khoya", "All-purpose flour", "Sugar syrup", "Ghee/oil for frying", "Cardamom", "Rose water"],
                 image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1krTQUm6n0fqHDks3RKxvLZgO_QTmkWkDH2EJGemzbjchI_6SEBw46xL0m0XAHUoCUEJGfsP6tQP_rfLV8PKl_XNXlomh&s=10",
                 tips: "Very high in sugar and fried. Enjoy only on special occasions in small portions. Not recommended for diabetics.",
-                nutrition: { calories: 380, carbs: "55g", fat: "16g", protein: "8g" }
+                nutrition: { calories: 380, carbs: "55g", fat: "16g", protein: "8g" },
+                aliases: ["gulab jamun", "jamun", "gulabjamun", "indian sweet"]
             },
             "rice_pudding": {
                 name: "Indian Rice Pudding",
@@ -638,7 +685,8 @@
                 ingredients: ["Rice", "Milk", "Sugar", "Nuts (almonds, pistachios)", "Cardamom", "Saffron"],
                 image: "https://www.thedeliciouscrescent.com/wp-content/uploads/2020/07/Rice-Kheer-1.jpg",
                 tips: "Rich in calcium but high in sugar. Use low-fat milk and reduce sugar. Good source of energy when consumed in moderation.",
-                nutrition: { calories: 220, carbs: "35g", fat: "6g", protein: "7g" }
+                nutrition: { calories: 220, carbs: "35g", fat: "6g", protein: "7g" },
+                aliases: ["rice pudding", "kheer", "chawal ki kheer", "payasam", "pongal"]
             },
             "pakoras": {
                 name: "Mixed Vegetable Pakoras",
@@ -646,7 +694,8 @@
                 ingredients: ["Chickpea flour", "Mixed vegetables (onion, spinach, potato)", "Spices", "Oil for frying", "Salt"],
                 image: "https://media.istockphoto.com/id/177314242/photo/vegetable-pakora.jpg?s=612x612&w=0&k=20&c=iiVKreSzqvNN7UxGaDUw3HKU5jK-htT1DppUA89QtyE=",
                 tips: "Fried but made with vegetables and chickpea flour (good protein). Try baking instead of frying. Enjoy with mint chutney.",
-                nutrition: { calories: 180, carbs: "20g", fat: "9g", protein: "6g" }
+                nutrition: { calories: 180, carbs: "20g", fat: "9g", protein: "6g" },
+                aliases: ["pakoras", "pakoda", "bhajiya", "vegetable fritters"]
             },
             "papdi_chaat": {
                 name: "Papdi Chaat",
@@ -654,7 +703,8 @@
                 ingredients: ["Papdis (fried dough)", "Boiled potatoes", "Chickpeas", "Yogurt", "Tamarind chutney", "Spices", "Sev"],
                 image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTPBDqZ3HLMFE8YLcN-oC21879CQln__SF5vA&s",
                 tips: "Contains fried elements but also healthy components like chickpeas and yogurt. Control portion size and chutney quantity.",
-                nutrition: { calories: 250, carbs: "35g", fat: "10g", protein: "8g" }
+                nutrition: { calories: 250, carbs: "35g", fat: "10g", protein: "8g" },
+                aliases: ["papdi chaat", "chaat", "dahi papdi chaat", "sev puri"]
             },
             "khichdi": {
                 name: "Khichdi",
@@ -662,7 +712,8 @@
                 ingredients: ["Rice", "Lentils (moong dal)", "Ghee", "Turmeric", "Cumin seeds", "Vegetables", "Salt"],
                 image: "https://www.indianveggiedelight.com/wp-content/uploads/2024/01/oats-khichdi-featured.jpg",
                 tips: "Excellent balanced meal with carbs, protein, and fiber. Easy to digest. Use less ghee and add more vegetables.",
-                nutrition: { calories: 210, carbs: "35g", fat: "5g", protein: "10g" }
+                nutrition: { calories: 210, carbs: "35g", fat: "5g", protein: "10g" },
+                aliases: ["khichdi", "khichri", "kichdi", "dal khichdi"]
             },
             "paneer": {
                 name: "Paneer",
@@ -670,7 +721,8 @@
                 ingredients: ["Milk", "Lemon juice/vinegar", "Salt"],
                 image: "https://media.istockphoto.com/id/1183707972/photo/paneer-cottage-cheese-close-up.jpg?s=612x612&w=0&k=20&c=PX2_y5j0KJUURf2qZuWMrxmZ5wtbci076zEg_1w8KiI=",
                 tips: "Excellent source of vegetarian protein and calcium. Choose low-fat paneer. Can be grilled or added to various dishes.",
-                nutrition: { calories: 265, carbs: "4g", fat: "20g", protein: "18g" }
+                nutrition: { calories: 265, carbs: "4g", fat: "20g", protein: "18g" },
+                aliases: ["paneer", "cottage cheese", "indian cottage cheese", "fresh paneer"]
             },
             "jalebi": {
                 name: "Jalebi",
@@ -678,7 +730,8 @@
                 ingredients: ["All-purpose flour", "Sugar syrup", "Saffron", "Oil for frying", "Cardamom", "Food coloring"],
                 image: "https://recipes.timesofindia.com/thumb/53099699.cms?width=1200&height=900",
                 tips: "Extremely high in sugar and fried. Consume only occasionally in very small portions. Not suitable for diabetics.",
-                nutrition: { calories: 420, carbs: "75g", fat: "12g", protein: "4g" }
+                nutrition: { calories: 420, carbs: "75g", fat: "12g", protein: "4g" },
+                aliases: ["jalebi", "jelabi", "jilapi", "sweet jalebi"]
             },
             "barfi": {
                 name: "Barfi",
@@ -686,31 +739,31 @@
                 ingredients: ["Milk powder/khoya", "Sugar", "Ghee", "Nuts", "Cardamom", "Optional: coconut, pistachios"],
                 image: "https://t3.ftcdn.net/jpg/16/42/00/76/360_F_1642007683_TpuXZaVURl5eEOJboPTVwPAfLmza6lQx.jpg",
                 tips: "High in sugar and saturated fat. Traditional festive sweet - enjoy tiny portions on special occasions only.",
-                nutrition: { calories: 380, carbs: "45g", fat: "20g", protein: "8g" }
+                nutrition: { calories: 380, carbs: "45g", fat: "20g", protein: "8g" },
+                aliases: ["barfi", "burfi", "milk barfi", "kaju barfi", "besan barfi"]
             },
             "jhalmuri": {
                 name: "Jhalmuri",
                 healthy: "healthy",
-                ingredients: ["Puffed rice", "Chopped onions", "Chopped tomatoes", "Chopped cucumber", "Chopped green chilies", "Lemon juice", "Mustard oil", "Spices (chaat masala, roasted 		cumin powder)", "Fresh coriander"],
+                ingredients: ["Puffed rice", "Chopped onions", "Chopped tomatoes", "Chopped cucumber", "Chopped green chilies", "Lemon juice", "Mustard oil", "Spices (chaat masala, roasted cumin powder)", "Fresh coriander"],
                 image: "https://www.whiskaffair.com/wp-content/uploads/2020/10/Jhal-Muri-2-3.jpg",
                 tips: "A low-calorie, high-fiber snack. Use minimal oil and salt. Rich in fiber and antioxidants from fresh vegetables.",
-                nutrition: { calories: 120, carbs: "22g", fat: "3g", protein: "3g" }
+                nutrition: { calories: 120, carbs: "22g", fat: "3g", protein: "3g" },
+                aliases: ["jhalmuri", "jhal muri", "bhel", "spicy puffed rice"]
             },
             "momo": {
                 name: "Momo",
                 healthy: "moderate",
                 ingredients: ["All-purpose flour (for dough)", "Minced chicken/vegetables", "Onions", "Garlic", "Ginger", "Soy sauce", "Vegetable oil", "Spices", "Salt"],
-                image: "https://junifoods.com/wp-content/uploads/2023/11/Easy-Chicken-Momo-Dumplings-Sajilo-Kukhura-ko-Momo-%E0%A4%B8%E0%A4%9C%E0%A4%BF%E0%A4%B2%E0%A5%8B-%E0%A4%95%E0%A5%		81%E0%A4%96%E0%A5%81%E0%A4%B0%E0%A4%BE%E0%A4%95%E0%A5%8B-%E0%A4%AE%E0%A4%AE-500x375.jpg",
+                image: "https://junifoods.com/wp-content/uploads/2023/11/Easy-Chicken-Momo-Dumplings-Sajilo-Kukhura-ko-Momo-%E0%A4%B8%E0%A4%9C%E0%A4%BF%E0%A4%B2%E0%A5%8B-%E0%A4%95%E0%A5%81%E0%A4%96%E0%A5%81%E0%A4%B0%E0%A4%BE%E0%A4%95%E0%A5%8B-%E0%A4%AE%E0%A4%AE-500x375.jpg",
                 tips: "Steamed momos are healthier than fried ones. Opt for vegetable or lean chicken filling. Control portion size and pair with healthy dipping sauce.",
-                nutrition: { calories: 200, carbs: "28g", fat: "6g", protein: "12g" }
+                nutrition: { calories: 200, carbs: "28g", fat: "6g", protein: "12g" },
+                aliases: ["momo", "dumplings", "steamed momo", "vegetable momo", "chicken momo"]
             }
         };
 
         // DOM elements
         const foodNameInput = document.getElementById('foodName');
-        const foodImageInput = document.getElementById('foodImage');
-        const fileInputContainer = document.getElementById('fileInputContainer');
-        const imagePreview = document.getElementById('imagePreview');
         const foodSelect = document.getElementById('foodSelect');
         const checkButton = document.getElementById('checkButton');
         const healthStatus = document.getElementById('healthStatus');
@@ -720,6 +773,7 @@
         const nutritionFacts = document.getElementById('nutritionFacts');
         const foodGrid = document.getElementById('foodGrid');
         const filterButtons = document.querySelectorAll('.filter-btn');
+        const searchResults = document.getElementById('searchResults');
 
         // Initialize food grid
         function initializeFoodGrid() {
@@ -762,7 +816,7 @@
                 checkFood(foodId);
                 foodSelect.value = foodId;
                 foodNameInput.value = '';
-                clearImagePreview();
+                hideSearchResults();
             });
         }
 
@@ -835,101 +889,122 @@
             tipsContent.textContent = food.tips;
             healthTips.style.display = 'block';
             
-            // Update image preview if available
-            if (food.image) {
-                imagePreview.src = food.image;
-                imagePreview.style.display = 'block';
-            }
+            // Clear search input
+            foodNameInput.value = '';
         }
 
-        // Handle file input
-        fileInputContainer.addEventListener('click', () => {
-            foodImageInput.click();
-        });
-
-        foodImageInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreview.src = e.target.result;
-                    imagePreview.style.display = 'block';
-                    foodNameInput.value = '';
-                    foodSelect.value = '';
-                };
-                reader.readAsDataURL(this.files[0]);
-            }
-        });
-
-        // Handle manual food name input
-        function findFoodByName(name) {
-            const normalized = name.toLowerCase().trim();
+        // Enhanced search function with fuzzy matching
+        function searchFood(query) {
+            query = query.toLowerCase().trim();
+            if (!query) return [];
             
-            // Try to find exact match
+            const results = [];
+            
             for (const foodId in foodDatabase) {
                 const food = foodDatabase[foodId];
-                if (food.name.toLowerCase() === normalized) {
-                    return foodId;
+                
+                // Exact name match
+                if (food.name.toLowerCase() === query) {
+                    results.push({ id: foodId, food: food, score: 100 });
+                    continue;
+                }
+                
+                // Check if query is in food name
+                if (food.name.toLowerCase().includes(query)) {
+                    results.push({ id: foodId, food: food, score: 80 });
+                    continue;
+                }
+                
+                // Check aliases
+                if (food.aliases) {
+                    for (const alias of food.aliases) {
+                        if (alias.toLowerCase().includes(query) || query.includes(alias.toLowerCase())) {
+                            results.push({ id: foodId, food: food, score: 70 });
+                            break;
+                        }
+                    }
+                    continue;
+                }
+                
+                // Check ingredients (if query matches common ingredients)
+                const ingredientsStr = food.ingredients.join(' ').toLowerCase();
+                if (ingredientsStr.includes(query)) {
+                    results.push({ id: foodId, food: food, score: 40 });
+                    continue;
                 }
             }
             
-            // Try to find partial match
-            for (const foodId in foodDatabase) {
-                const food = foodDatabase[foodId];
-                if (normalized.includes(food.name.toLowerCase()) || 
-                    food.name.toLowerCase().includes(normalized)) {
-                    return foodId;
-                }
-            }
+            // Sort by score (highest first)
+            results.sort((a, b) => b.score - a.score);
             
-            // Check for common keywords
-            const keywordMap = {
-                'samosa': 'samosa',
-                'paneer butter': 'paneer_butter_masala',
-                'butter paneer': 'paneer_butter_masala',
-                'pani puri': 'pani_puri',
-                'gol gappa': 'pani_puri',
-                'naan': 'naan',
-                'aloo roti': 'aloo_roti',
-                'saag': 'saag_paneer',
-                'palak paneer': 'saag_paneer',
-                'kachori': 'matar_kachori',
-                'tandoori': 'tandoori_chicken',
-                'gajar halwa': 'gajar_ka_halwa',
-                'carrot halwa': 'gajar_ka_halwa',
-                'masala lassi': 'masala_lassi',
-                'rice': 'basmati_rice',
-                'chicken tikka': 'chicken_tikka_masala',
-                'lassi': 'lassi',
-                'gulab jamun': 'gulab_jamun',
-                'rice pudding': 'rice_pudding',
-                'kheer': 'rice_pudding',
-                'pakora': 'pakoras',
-                'pakoda': 'pakoras',
-                'chaat': 'papdi_chaat',
-                'khichdi': 'khichdi',
-                'paneer': 'paneer',
-                'cottage cheese': 'paneer',
-                'jalebi': 'jalebi',
-                'barfi': 'barfi',
-                'burfi': 'barfi',
-                'jhalmuri': 'jhalmuri',
-                'momo': 'momo'
-            };
-            
-            for (const keyword in keywordMap) {
-                if (normalized.includes(keyword)) {
-                    return keywordMap[keyword];
-                }
-            }
-            
-            return null;
+            return results.slice(0, 5); // Return top 5 results
         }
 
-        // Clear image preview
-        function clearImagePreview() {
-            imagePreview.src = '';
-            imagePreview.style.display = 'none';
-            foodImageInput.value = '';
+        // Display search results
+        function displaySearchResults(results) {
+            searchResults.innerHTML = '';
+            
+            if (results.length === 0) {
+                const noResults = document.createElement('div');
+                noResults.className = 'search-result-item';
+                noResults.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">No dishes found. Try another search.</div>';
+                searchResults.appendChild(noResults);
+            } else {
+                results.forEach(result => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'search-result-item';
+                    resultItem.dataset.id = result.id;
+                    
+                    let healthClass = '';
+                    let healthText = '';
+                    
+                    if (result.food.healthy === 'healthy') {
+                        healthClass = 'healthy';
+                        healthText = 'Healthy';
+                    } else if (result.food.healthy === 'moderate') {
+                        healthClass = 'moderate';
+                        healthText = 'Moderate';
+                    } else {
+                        healthClass = 'unhealthy';
+                        healthText = 'Unhealthy';
+                    }
+                    
+                    resultItem.innerHTML = `
+                        <div class="search-result-name">${result.food.name}</div>
+                        <span class="search-result-healthy ${healthClass}">${healthText}</span>
+                        <div class="search-result-category">Click to view details</div>
+                    `;
+                    
+                    searchResults.appendChild(resultItem);
+                    
+                    // Add click event to search result item
+                    resultItem.addEventListener('click', () => {
+                        checkFood(result.id);
+                        foodSelect.value = result.id;
+                        foodNameInput.value = '';
+                        hideSearchResults();
+                    });
+                });
+            }
+            
+            searchResults.style.display = 'block';
+        }
+
+        // Hide search results
+        function hideSearchResults() {
+            searchResults.style.display = 'none';
+        }
+
+        // Handle manual food name input with search
+        function handleFoodSearch() {
+            const query = foodNameInput.value.trim();
+            if (query.length < 2) {
+                hideSearchResults();
+                return;
+            }
+            
+            const results = searchFood(query);
+            displaySearchResults(results);
         }
 
         // Handle check button click
@@ -940,25 +1015,24 @@
             if (foodSelect.value) {
                 foodId = foodSelect.value;
             }
-            // Priority 2: Entered in text input
+            // Priority 2: Search in the input
             else if (foodNameInput.value.trim()) {
-                foodId = findFoodByName(foodNameInput.value.trim());
-            }
-            // Priority 3: Image uploaded (simulate with random food for demo)
-            else if (foodImageInput.files && foodImageInput.files[0]) {
-                const foodIds = Object.keys(foodDatabase);
-                const randomIndex = Math.floor(Math.random() * foodIds.length);
-                foodId = foodIds[randomIndex];
+                const results = searchFood(foodNameInput.value.trim());
+                if (results.length > 0) {
+                    foodId = results[0].id;
+                }
             }
             
             if (foodId) {
                 checkFood(foodId);
+                hideSearchResults();
             } else {
                 healthStatus.innerHTML = '<p>Dish not found in database. Please try another dish.</p>';
                 healthStatus.className = 'health-status unhealthy';
                 ingredientsList.innerHTML = '<li>No ingredients available</li>';
                 healthTips.style.display = 'none';
                 nutritionFacts.style.display = 'none';
+                hideSearchResults();
             }
         });
 
@@ -967,13 +1041,31 @@
             if (this.value) {
                 checkFood(this.value);
                 foodNameInput.value = '';
-                clearImagePreview();
+                hideSearchResults();
+            }
+        });
+
+        // Handle input in food name search
+        let searchTimeout;
+        foodNameInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(handleFoodSearch, 300);
+            
+            // Clear dropdown when typing
+            foodSelect.value = '';
+        });
+
+        // Hide search results when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!foodNameInput.contains(event.target) && !searchResults.contains(event.target)) {
+                hideSearchResults();
             }
         });
 
         // Handle Enter key in food name input
         foodNameInput.addEventListener('keyup', function(event) {
             if (event.key === 'Enter') {
+                clearTimeout(searchTimeout);
                 checkButton.click();
             }
         });
@@ -1012,13 +1104,14 @@
             foodSelect.value = 'jhalmuri';
         });
     </script>
-<link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
-<script type="module">
+	</script>
+	<link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+	<script type="module">
 	import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
 
 	createChat({
 		webhookUrl: 'https://premmandal24.app.n8n.cloud/webhook/c53019df-80f2-4297-b4e9-91aef44bfb0b/chat'
 	});
-</script>
+        </script>
 </body>
 </html>
